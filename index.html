@@ -564,38 +564,6 @@
     </div>
 </div>
 
-<script>
-    let deferredPrompt;
-    const banner = document.getElementById('install-banner');
-    const btnInstall = document.getElementById('btn-install');
-
-    // Escucha el evento de instalación del navegador
-    window.addEventListener('beforeinstallprompt', (e) => {
-        // Evita que Chrome muestre su propio aviso mini
-        e.preventDefault();
-        // Guarda el evento
-        deferredPrompt = e;
-        // MUESTRA EL BANNER AUTOMÁTICAMENTE
-        banner.style.display = 'flex';
-    });
-
-    // Acción al hacer clic en INSTALAR
-    btnInstall.addEventListener('click', () => {
-        banner.style.display = 'none'; // Oculta el banner
-        deferredPrompt.prompt(); // Muestra la ventana oficial
-        deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-                console.log('Usuario instaló SISS');
-            }
-            deferredPrompt = null;
-        });
-    });
-
-    // Si ya se instaló, esconder el banner por siempre
-    window.addEventListener('appinstalled', () => {
-        banner.style.display = 'none';
-    });
-</script>
 
 
 <script type="module">
@@ -787,6 +755,42 @@ async function sincronizarBajar() {
 
 }
 
+
+		let deferredPrompt;
+const installBanner = document.getElementById('install-banner');
+const btnInstall = document.getElementById('btn-install');
+
+// Ocultar inicialmente por si acaso
+installBanner.style.display = 'none';
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Evita que el navegador muestre el banner automático feo
+    e.preventDefault();
+    // Guarda el evento para usarlo luego
+    deferredPrompt = e;
+    // Muestra nuestro banner personalizado
+    installBanner.style.display = 'flex';
+});
+
+btnInstall.addEventListener('click', (e) => {
+    // Oculta nuestro banner
+    installBanner.style.display = 'none';
+    // Muestra el prompt de instalación oficial
+    deferredPrompt.prompt();
+    // Espera a ver si el usuario aceptó o no
+    deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+            console.log('El usuario instaló la App');
+        }
+        deferredPrompt = null;
+    });
+});
+
+// Ocultar banner si ya está instalada
+window.addEventListener('appinstalled', () => {
+    installBanner.style.display = 'none';
+    console.log('PWA instalada con éxito');
+});
 
 
         function showView(id) {
@@ -1239,4 +1243,5 @@ async function sincronizarBajar() {
 </body>
 
 </html>
+
 
