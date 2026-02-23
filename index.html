@@ -552,6 +552,50 @@
         </div>
 
     </div>
+	
+	<div id="install-banner" style="display: none; background: #1e3a8a; color: white; padding: 15px; position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.2); font-family: sans-serif;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <img src="icono.png" width="40" height="40" style="border-radius: 8px;">
+        <span>Instala <b>SISS</b> para usarlo sin internet</span>
+    </div>
+    <div>
+        <button id="btn-install" style="background: #2563eb; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-right: 10px;">INSTALAR</button>
+        <button onclick="document.getElementById('install-banner').style.display='none'" style="background: transparent; color: white; border: none; cursor: pointer; font-size: 20px;">×</button>
+    </div>
+</div>
+
+<script>
+    let deferredPrompt;
+    const banner = document.getElementById('install-banner');
+    const btnInstall = document.getElementById('btn-install');
+
+    // Escucha el evento de instalación del navegador
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Evita que Chrome muestre su propio aviso mini
+        e.preventDefault();
+        // Guarda el evento
+        deferredPrompt = e;
+        // MUESTRA EL BANNER AUTOMÁTICAMENTE
+        banner.style.display = 'flex';
+    });
+
+    // Acción al hacer clic en INSTALAR
+    btnInstall.addEventListener('click', () => {
+        banner.style.display = 'none'; // Oculta el banner
+        deferredPrompt.prompt(); // Muestra la ventana oficial
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('Usuario instaló SISS');
+            }
+            deferredPrompt = null;
+        });
+    });
+
+    // Si ya se instaló, esconder el banner por siempre
+    window.addEventListener('appinstalled', () => {
+        banner.style.display = 'none';
+    });
+</script>
 
 
 <script type="module">
