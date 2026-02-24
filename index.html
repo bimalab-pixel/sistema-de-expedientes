@@ -322,6 +322,7 @@
 
 
    <div id="view-editor" class="view">
+   <button class="fab-main" style="position:fixed; top:20px; left:20px; width:45px; height:45px; font-size:15px; z-index:2000; background: var(--accent);" onclick="volverAlArchivo()">⬅</button>
 
     <div class="page-container">
 
@@ -345,7 +346,7 @@
 
                 <tr style="border:none;">
 
-                    <td style="border:none; width:15%; text-align:center;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Coat_of_arms_of_El_Salvador.svg/150px-Coat_of_arms_of_El_Salvador.svg.png" width="50"></td>
+                    
 
                     <td style="border:none; text-align:center;">
 
@@ -915,176 +916,94 @@ window.addEventListener('appinstalled', () => {
 
 
 
-       function renderGrid() {
-
+      function renderGrid() {
     const grid = document.getElementById('gridPacientes');
-
     const busqueda = document.getElementById('busquedaPaciente').value.toLowerCase();
-
     grid.innerHTML = "";
 
-
-
     if (db.length === 0) {
-
         grid.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>No hay registros.</p>";
-
         return;
-
     }
 
-
-
-    // 1. Filtrar y agrupar jerárquicamente: Grupos[Año][Mes]
-
+    // 1. Filtrar y agrupar jerárquicamente
     const estructura = {};
-
     
-
     db.forEach((p, index) => {
-
-        // Filtro de búsqueda
-
         if (busqueda && !p.labelLista.toLowerCase().includes(busqueda) && !p.v2.includes(busqueda) && !p.v4.includes(busqueda)) {
-
             return;
-
         }
 
-
-
         const anio = p.registroAnio || "Sin Año";
-
         const mes = p.registroMes || "Sin Mes";
 
-
-
         if (!estructura[anio]) estructura[anio] = {};
-
         if (!estructura[anio][mes]) estructura[anio][mes] = [];
-
         
-
         estructura[anio][mes].push({ ...p, originalIndex: index });
-
     });
 
-
-
-    // 2. Renderizar la interfaz
-
+    // 2. Definir años ordenados (PRIMERO DEFINIMOS LA VARIABLE)
     const aniosOrdenados = Object.keys(estructura).sort((a, b) => b - a);
 
-
-
+    // 3. AHORA SI: Ordenar alfabéticamente dentro de cada mes
     aniosOrdenados.forEach(anio => {
-
-        // Contenedor del Año
-
-        const divAnio = document.createElement('div');
-
-        divAnio.style.cssText = "grid-column: 1/-1; margin-bottom: 10px;";
-
-        divAnio.innerHTML = `<div style="background: var(--primary); color: white; padding: 10px 15px; border-radius: 8px; font-weight: bold; font-size: 1.2rem; cursor: pointer;">📁 Año ${anio}</div>`;
-
-        grid.appendChild(divAnio);
-
-
-
-        const mesesOrdenados = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-
-        
-
-        // Verificamos qué meses tienen datos
-
-        mesesOrdenados.forEach(mes => {
-
-            if (estructura[anio][mes]) {
-
-                const registros = estructura[anio][mes];
-
-                
-
-                // Botón del Mes
-
-                const btnMes = document.createElement('div');
-
-                btnMes.style.cssText = "grid-column: 1/-1; margin-left: 25px; margin-top: 5px; background: #cbd5e1; padding: 8px; border-radius: 5px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between;";
-
-                btnMes.innerHTML = `<span>📅 ${mes}</span> <span>(${registros.length} registros) ▾</span>`;
-
-                
-
-                // Contenedor oculto para los registros de este mes
-
-                const contenedorRegistros = document.createElement('div');
-
-                contenedorRegistros.style.cssText = "display: none; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; padding: 15px; grid-column: 1/-1;";
-
-                
-
-                // Al hacer clic, se muestran/ocultan los registros
-
-                btnMes.onclick = () => {
-
-                    const estaAbierto = contenedorRegistros.style.display === "grid";
-
-                    contenedorRegistros.style.display = estaAbierto ? "none" : "grid";
-
-                    btnMes.style.background = estaAbierto ? "#cbd5e1" : "#94a3b8";
-
-                };
-
-
-
-                // Crear las tarjetas
-
-                registros.forEach(p => {
-
-                    const card = document.createElement('div');
-
-                    card.className = "patient-card";
-
-                    card.style.margin = "0"; // Ajuste para el nuevo grid
-
-                    card.innerHTML = `
-
-                        <span class="card-correlativo">No. ${p.correlativo}</span>
-
-                        <h3 style="font-size: 1rem;">${p.labelLista}</h3>
-
-                        <p style="font-size: 0.8rem;">Exp: ${p.v2 || '---'} | DUI: ${p.v4 || '---'}</p>
-
-                        <small style="color:gray; font-size: 0.7rem;">🕒 ${p.fechaRegistroLocal}</small>
-
-                    `;
-
-                    card.onclick = (e) => {
-
-                        e.stopPropagation(); // Evita cerrar el mes al hacer clic en la tarjeta
-
-                        cargarPaciente(p.originalIndex);
-
-                    };
-
-                    contenedorRegistros.appendChild(card);
-
-                });
-
-
-
-                grid.appendChild(btnMes);
-
-                grid.appendChild(contenedorRegistros);
-
-            }
-
+        Object.keys(estructura[anio]).forEach(mes => {
+            estructura[anio][mes].sort((a, b) => {
+                return a.labelLista.localeCompare(b.labelLista);
+            });
         });
-
     });
 
-}
+    // 4. Renderizar la interfaz
+    aniosOrdenados.forEach(anio => {
+        const divAnio = document.createElement('div');
+        divAnio.style.cssText = "grid-column: 1/-1; margin-bottom: 10px;";
+        divAnio.innerHTML = `<div style="background: var(--primary); color: white; padding: 10px 15px; border-radius: 8px; font-weight: bold; font-size: 1.2rem; cursor: pointer;">📁 Año ${anio}</div>`;
+        grid.appendChild(divAnio);
 
+        const mesesOrdenados = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        
+        mesesOrdenados.forEach(mes => {
+            if (estructura[anio][mes]) {
+                const registros = estructura[anio][mes];
+                
+                const btnMes = document.createElement('div');
+                btnMes.style.cssText = "grid-column: 1/-1; margin-left: 25px; margin-top: 5px; background: #cbd5e1; padding: 8px; border-radius: 5px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between;";
+                btnMes.innerHTML = `<span>📅 ${mes}</span> <span>(${registros.length} registros) ▾</span>`;
+                
+                const contenedorRegistros = document.createElement('div');
+                contenedorRegistros.style.cssText = "display: none; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; padding: 15px; grid-column: 1/-1;";
+                
+                btnMes.onclick = () => {
+                    const estaAbierto = contenedorRegistros.style.display === "grid";
+                    contenedorRegistros.style.display = estaAbierto ? "none" : "grid";
+                    btnMes.style.background = estaAbierto ? "#cbd5e1" : "#94a3b8";
+                };
+
+                registros.forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = "patient-card";
+                    card.style.margin = "0";
+                    card.innerHTML = `
+                        <span class="card-correlativo">No. ${p.correlativo}</span>
+                        <h3 style="font-size: 1rem;">${p.labelLista}</h3>
+                        <p style="font-size: 0.8rem;">Exp: ${p.v2 || '---'} | DUI: ${p.v4 || '---'}</p>
+                        <small style="color:gray; font-size: 0.7rem;">🕒 ${p.fechaRegistroLocal}</small>
+                    `;
+                    card.onclick = (e) => {
+                        e.stopPropagation();
+                        cargarPaciente(p.originalIndex);
+                    };
+                    contenedorRegistros.appendChild(card);
+                });
+
+                grid.appendChild(btnMes);
+                grid.appendChild(contenedorRegistros);
+            }
+        });
+    });
+}
 
 
         function cargarPaciente(index) {
@@ -1229,6 +1148,16 @@ window.addEventListener('appinstalled', () => {
 
 }
 
+function volverAlArchivo() {
+    // Si el índice es -1 significa que es un registro nuevo, volvemos al home
+    // Si es distinto de -1, estábamos viendo un registro del archivo
+    if (editandoIndex === -1) {
+        showView('view-home');
+    } else {
+        showView('view-archive');
+    }
+}
+
     </script>
 	<script>
   if ('serviceWorker' in navigator) {
@@ -1243,5 +1172,4 @@ window.addEventListener('appinstalled', () => {
 </body>
 
 </html>
-
 
